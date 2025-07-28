@@ -3,7 +3,7 @@
 client_id = "077a911ee3d02c1ea99069d91a990d7c"
 name = "Local Delivery Plus"
 handle = "local-delivery-plus"
-application_url = "https://nice-paintball-seafood-gym.trycloudflare.com"
+application_url = "https://local-delivery-plus.onrender.com"
 embedded = true
 
 [build]
@@ -26,7 +26,7 @@ api_version = "2025-07"
 scopes = "write_products,write_shipping"
 
 [auth]
-redirect_urls = ["https://nice-paintball-seafood-gym.trycloudflare.com/auth/callback", "https://nice-paintball-seafood-gym.trycloudflare.com/auth/shopify/callback", "https://nice-paintball-seafood-gym.trycloudflare.com/api/auth/callback"]
+redirect_urls = ["https://local-delivery-plus.onrender.com/auth/callback", "https://local-delivery-plus.onrender.com/auth/shopify/callback", "https://local-delivery-plus.onrender.com/api/auth/callback"]
 
 [pos]
 embedded = false
