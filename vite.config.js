@@ -70,4 +70,14 @@ export default defineConfig({
   optimizeDeps: {
     include: ["@shopify/app-bridge-react", "@shopify/polaris"],
   },
+  define: {
+    "process.env.SHOPIFY_APP_URL": JSON.stringify(process.env.SHOPIFY_APP_URL),
+    "process.env.SHOPIFY_API_KEY": JSON.stringify(process.env.SHOPIFY_API_KEY),
+  },
+  resolve: {
+    alias: {
+      // If needed, resolve `process` to a browser-compatible shim
+      process: "process/browser",
+    },
+  },
 });

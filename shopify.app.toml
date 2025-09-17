@@ -1,13 +1,13 @@
 # Learn more about configuring your app at https://shopify.dev/docs/apps/tools/cli/configuration
 
-client_id = "b289ec22468339379db110869b3302fc"
-name = "local-delivery-plus"
-handle = "local-delivery-plus-1"
-application_url = "https://4621301cd8fd.ngrok-free.app/"
+client_id = "140f4d16f1c35a0b5bd143a6485eb5f3"
+name = "garden-kitchen-app"
+handle = "garden-kitchen-app-1"
+application_url = "https://phpstack-1500401-5740422.cloudwaysapps.com/"
 embedded = true
 
 [build]
-include_config_on_deploy = true
+automatically_update_urls_on_dev = true
 
 [webhooks]
 api_version = "2025-07"
@@ -22,10 +22,10 @@ api_version = "2025-07"
 
 [access_scopes]
 # Learn more at https://shopify.dev/docs/apps/tools/cli/configuration#access_scopes
-scopes = "read_products,write_products,read_shipping,read_fulfillments,write_shipping"
+scopes = "read_products,write_products,read_shipping,read_fulfillments,write_shipping,read_inventory,write_inventory,read_locations,"
 
 [auth]
-redirect_urls = [ "https://4621301cd8fd.ngrok-free.app/api/auth" ]
+redirect_urls = [ "https://phpstack-1500401-5740422.cloudwaysapps.com/api/auth" ]
 
 [pos]
 embedded = false

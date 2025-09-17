@@ -7,20 +7,10 @@ export async function loader({ request }) {
 
   const response = await admin.graphql(`
     {
-      products(first: 25) {
+      collections(first: 100) {
         nodes {
           id
           title
-          metafield(namespace: \"custom\", key: \"Date\") {
-            value
-            type
-          }
-          collections(first: 5) {
-            nodes {
-              id
-              title
-            }
-          }
           description
           updatedAt
         }
@@ -29,27 +19,27 @@ export async function loader({ request }) {
 
   const {
     data: {
-      products: { nodes },
+      collections: { nodes },
     },
   } = await response.json();
 
   console.log("res", nodes);
 
-  return json({ products: nodes });
+  return json({ collections: nodes });
 }
 
 export default function Product() {
-  const { products } = useLoaderData();
-  console.log("products", products);
+  const { collections } = useLoaderData();
+  console.log("collections", collections);
 
   return (
     <div>
-      <h2>Products</h2>
+      <h2>Collections</h2>
       <ul>
-        {products &&
-          products.map((product, index) => (
+        {collections &&
+          collections.map((collection, index) => (
             <li key={index}>
-              <strong>{product.title}</strong> : {product.description}
+              <strong>{collection.title}</strong> : {collection.description}
             </li>
           ))}
       </ul>

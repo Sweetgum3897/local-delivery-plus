@@ -1,3 +1,4 @@
+import { json } from "@remix-run/node";
 import React, { useContext, useEffect, useRef, useState } from "react";
 import { useFetcher, useNavigate } from "@remix-run/react";
 import { Page, Layout, BlockStack } from "@shopify/polaris";
@@ -5,12 +6,12 @@ import { useAppBridge } from "@shopify/app-bridge-react";
 import { authenticate } from "../shopify.server";
 import {
   Button,
-  Form,
   Input,
   Popconfirm,
   Table,
   InputNumber,
   Card,
+  Form,
 } from "antd";
 
 const EditableContext = React.createContext(null);
@@ -118,27 +119,25 @@ const EditableCell = ({
 };
 
 export const action = async ({ request }) => {
-  const { admin, session } = await authenticate.admin(request);
-  const accessToken = session.accessToken;
-  console.log("Admin API Token:", accessToken);
+  const { admin } = await authenticate.admin(request);
 
   const response = await admin.graphql(
     `#graphql
-  mutation CarrierServiceCreate($input: DeliveryCarrierServiceCreateInput!) {
-    carrierServiceCreate(input: $input) {
-      carrierService {
-        id
-        name
-        callbackUrl
-        active
-        supportsServiceDiscovery
+    mutation CarrierServiceCreate($input: DeliveryCarrierServiceCreateInput!) {
+      carrierServiceCreate(input: $input) {
+        carrierService {
+          id
+          name
+          callbackUrl
+          active
+          supportsServiceDiscovery
+        }
+        userErrors {
+          field
+          message
+        }
       }
-      userErrors {
-        field
-        message
-      }
-    }
-  }`,
+    }`,
     {
       variables: {
         input: {
@@ -367,7 +366,20 @@ export default function Index() {
   return (
     <Page>
       <ui-title-bar title="Local Delivery+">
-        <button onClick={() => navigate("/products")}>Products List</button>
+        <button onClick={() => navigate("/app")}>Local Delivery+ Home</button>
+        {/* <button onClick={() => navigate("/products")}>Products List</button>
+        <button onClick={() => navigate("/collections")}>
+          Collections List
+        </button> */}
+        <button onClick={() => navigate("/default/inventory/quantity")}>
+          Default Inventory Quantity
+        </button>
+        <button onClick={() => navigate("/expired/products/cleanup")}>
+          Expired Products Cleanup
+        </button>
+        <button onClick={() => navigate("/testGraphQL")}>
+          GraphQL Playground
+        </button>
       </ui-title-bar>
       <Layout>
         <Layout.Section>
