@@ -3,15 +3,19 @@ import { getAdminClient, SPECIAL_COLLECTION_ID } from "../shopify.server.js";
 const getCutoff = (metaDate, hourOffset) => {
   const [year, month, day] = metaDate.split("-").map(Number);
 
-  // Target date at midnight UTC
-  const dateObj = new Date(Date.UTC(year, month - 1, day));
+  // Step 1 — Create a date at midnight IN EST
+  const estMidnight = new Date(
+    new Date(Date.UTC(year, month - 1, day)).toLocaleString("en-US", {
+      timeZone: "America/New_York",
+    }),
+  );
 
-  // Apply offset (negative = before date, positive = after date)
-  dateObj.setUTCHours(dateObj.getUTCHours() - hourOffset);
+  // Step 2 — Apply hour offset as EST hours
+  estMidnight.setHours(estMidnight.getHours() - hourOffset);
 
-  console.log("Calculated cutoff date:", dateObj);
+  console.log("Calculated EST cutoff date:", estMidnight);
 
-  return dateObj;
+  return estMidnight;
 };
 
 export default async function expireProducts() {
@@ -32,7 +36,11 @@ export default async function expireProducts() {
   console.log("Expired inventory hours:", expiredTime);
 
   const collectionId = `gid://shopify/Collection/${SPECIAL_COLLECTION_ID}`; // 🔹 your special collection
-  const now = new Date();
+  const now = new Date(
+    new Date().toLocaleString("en-US", {
+      timeZone: "America/New_York",
+    }),
+  );
   console.log("Current time (EST):", now);
 
   // Step 1: fetch products with metafield
