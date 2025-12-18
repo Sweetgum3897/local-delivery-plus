@@ -63,19 +63,12 @@ export default function DefaultInventoryQuantity() {
   return (
     <Page>
       <ui-title-bar title="Local Delivery+">
-        <button onClick={() => navigate("/app")}>Local Delivery+ Home</button>
-        {/* <button onClick={() => navigate("/products")}>Products List</button>
-        <button onClick={() => navigate("/collections")}>
-          Collections List
-        </button> */}
+        <button onClick={() => navigate("/app")}>Local Delivery+</button>
         <button onClick={() => navigate("/default/inventory/quantity")}>
           Default Inventory Quantity
         </button>
         <button onClick={() => navigate("/expired/products/cleanup")}>
           Expired Products Cleanup
-        </button>
-        <button onClick={() => navigate("/testGraphQL")}>
-          GraphQL Playground
         </button>
       </ui-title-bar>
       <Layout>
