@@ -366,7 +366,7 @@ export default function Index() {
   return (
     <Page>
       <ui-title-bar title="Local Delivery+">
-        <button onClick={() => navigate("/app")}>Local Delivery+ Home</button>
+        <button onClick={() => navigate("/app")}>Local Delivery+</button>
         {/* <button onClick={() => navigate("/products")}>Products List</button>
         <button onClick={() => navigate("/collections")}>
           Collections List
@@ -377,9 +377,9 @@ export default function Index() {
         <button onClick={() => navigate("/expired/products/cleanup")}>
           Expired Products Cleanup
         </button>
-        <button onClick={() => navigate("/testGraphQL")}>
+        {/* <button onClick={() => navigate("/testGraphQL")}>
           GraphQL Playground
-        </button>
+        </button> */}
       </ui-title-bar>
       <Layout>
         <Layout.Section>

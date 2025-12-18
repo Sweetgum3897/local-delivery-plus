@@ -2,23 +2,40 @@ import { json } from "@remix-run/node";
 import { getAdminClient, SPECIAL_COLLECTION_ID } from "../shopify.server";
 import { setProductInventory } from "../utils/inventory.js";
 
-// In-memory store (replace with DB in production)
-global._oldCollectionProducts = global._oldCollectionProducts || [];
+const locks = new Map();
+
+function withLock(key, fn) {
+  if (locks.has(key)) {
+    return Promise.resolve({ ok: false, reason: "locked" });
+  }
+
+  locks.set(key, true);
+  return Promise.resolve()
+    .then(fn)
+    .finally(() => {
+      locks.delete(key);
+    });
+}
 
 export async function action({ request }) {
   const payload = await request.text();
   const collection = JSON.parse(payload);
 
-  if (collection.id == SPECIAL_COLLECTION_ID) {
+  if (String(collection.id) !== String(SPECIAL_COLLECTION_ID)) {
+    return json({ ok: true });
+  }
+
+  return await withLock(`collection-${SPECIAL_COLLECTION_ID}`, async () => {
     console.log("📦 Special collection updated:", collection.id);
 
-    const admin = getAdminClient(); // ✅ now uses env vars
+    const admin = getAdminClient();
     console.log("✅ Admin client ready");
 
-    // Step 1: fetch current products in the collection
+    const collectionGid = `gid://shopify/Collection/${SPECIAL_COLLECTION_ID}`;
+
     const productsRes = await admin.query({
       data: `{
-        collection(id: "gid://shopify/Collection/${SPECIAL_COLLECTION_ID}") {
+        collection(id: "${collectionGid}") {
           products(first: 50) {
             edges { node { id title } }
           }
@@ -26,19 +43,30 @@ export async function action({ request }) {
       }`,
     });
 
-    const data = productsRes.body;
-    const newProductIds = data.data.collection.products.edges.map(
+    const newProductIds = productsRes.body.data.collection.products.edges.map(
       (e) => e.node.id,
     );
 
-    // Step 2: load old list
-    const oldProductIds = global._oldCollectionProducts;
+    const metafieldRes = await admin.query({
+      data: `{
+        collection(id: "${collectionGid}") {
+          metafield(namespace: "app", key: "product_ids") {
+            id
+            value
+            type
+          }
+        }
+      }`,
+    });
 
-    // Step 3: diff
+    const oldProductIdsRaw =
+      metafieldRes.body.data.collection.metafield?.value || "[]";
+    const oldProductIds = JSON.parse(oldProductIdsRaw);
+
     const added = newProductIds.filter((id) => !oldProductIds.includes(id));
     const removed = oldProductIds.filter((id) => !newProductIds.includes(id));
 
-    const metafieldRes = await admin.query({
+    const defaultQtyRes = await admin.query({
       data: `{
         shop {
           metafield(namespace: "app", key: "default_inventory_quantity") {
@@ -49,26 +77,75 @@ export async function action({ request }) {
     });
 
     const defaultQty = parseInt(
-      metafieldRes.body.data.shop.metafield?.value || "15",
+      defaultQtyRes.body.data.shop.metafield?.value || "15",
       10,
     );
 
-    // Step 4: set inventory
     for (const productId of added) {
-      console.log(
-        `🆕 Added to collection: ${productId} → set inventory ${defaultQty}`,
-      );
-      await setProductInventory(admin, productId, defaultQty);
+      const currentInventoryRes = await admin.query({
+        data: `{
+          product(id: "${productId}") {
+            variants(first: 1) {
+              edges {
+                node {
+                  inventoryQuantity
+                }
+              }
+            }
+          }
+        }`,
+      });
+
+      const currentQty =
+        currentInventoryRes.body.data.product.variants.edges[0].node
+          .inventoryQuantity ?? 0;
+
+      if (currentQty === 0) {
+        console.log(`🆕 Added: ${productId} → inventory ${defaultQty}`);
+        await setProductInventory(admin, productId, defaultQty);
+      } else {
+        console.log(
+          `⏭️ Skipped: ${productId} already has inventory (${currentQty})`,
+        );
+      }
     }
 
     for (const productId of removed) {
-      console.log(`❌ Removed from collection: ${productId} → set inventory 0`);
+      console.log(`❌ Removed: ${productId} → inventory 0`);
       await setProductInventory(admin, productId, 0);
     }
 
-    // Step 5: save latest state
-    global._oldCollectionProducts = newProductIds;
-  }
+    const metafieldSaveRes = await admin.query({
+      data: `
+        mutation SetProductIdsMetafield {
+          metafieldsSet(metafields: [{
+            ownerId: "${collectionGid}",
+            namespace: "app",
+            key: "product_ids",
+            type: "list.product_reference",
+            value: ${JSON.stringify(JSON.stringify(newProductIds))}
+          }]) {
+            metafields {
+              id
+              key
+              value
+            }
+            userErrors {
+              field
+              message
+            }
+          }
+        }
+      `,
+    });
 
-  return json({ ok: true });
+    const errors = metafieldSaveRes.body.data.metafieldsSet.userErrors;
+    if (errors.length > 0) {
+      console.warn("⚠️ Metafield save errors:", errors);
+    } else {
+      console.log("💾 Metafield updated with new product IDs.");
+    }
+
+    return json({ ok: true });
+  });
 }
